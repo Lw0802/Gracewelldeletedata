@@ -145,21 +145,19 @@
     <!-- Page content -->
     <section class="content-section">
       <h1 class="content-header">Delete User Data</h1>
-      <div id="content" >
-        
-        
+      <div id="content">
         <br><br>
         <p>Enter your email to request data deletion:</p>
         <label for="email">Email:</label>
-    <input type="email" id="email" placeholder="Enter the email to delete">
-    <label for="password">Password:</label>
-    <input type="password" id="password" placeholder="Enter your password">
-    <button onclick="signIn()">Sign In</button>
-    <button onclick="deleteUser()">Delete User Account</button>
+        <input type="email" id="email" placeholder="Enter the email to delete">
+        <label for="password">Password:</label>
+        <input type="password" id="password" placeholder="Enter your password">
+        <!-- Buttons are moved below the input fields -->
+        <button onclick="signIn()">Sign In</button>
+        <button onclick="deleteUser()">Delete User Account</button>
         <div id="status"></div>
-        
         <ul id="requests-list"></ul>
-    </div>
+      </div>
       </div>
     </section>
 

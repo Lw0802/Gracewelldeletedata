@@ -24,7 +24,7 @@
             margin: 0 auto;
             padding: 10px;
             border: 1px solid #ccc;
-            border-radius: 5px;
+            border-radius: 10px; /* Increased border radius */
             text-align: left;
             min-height: 300px;
             overflow-y: scroll;
@@ -33,27 +33,41 @@
         .message {
             background-color: #007bff;
             color: white;
-            padding: 10px;
             border-radius: 10px;
-            display: block;
-            margin: 5px;
-            max-width: 60%;
+            max-width: 30%; /* Smaller width */
             clear: both;
+            padding: 8px; /* Smaller padding */
+            margin: 5px;
+            overflow-wrap: break-word;
+            position: relative;
         }
 
         .message.user {
             background-color: #4CAF50;
         }
 
-        #messageInput, #sendButton, #usernameInput {
+        .message .message-text {
+            font-size: 11px; /* Smaller font size */
+        }
+
+        .message .timestamp {
+            font-size: 10px; /* Smaller font size */
+            position: absolute;
+            bottom: 2px; /* Adjusted bottom position */
+            right: 2px; /* Adjusted right position */
+        }
+
+        .message .user-text {
+            font-weight: bold;
+            font-size: 12px; /* Smaller font size */
+        }
+
+        #messageInput {
             display: block;
             margin: 10px auto;
             padding: 5px;
             border: 1px solid #ccc;
             border-radius: 5px;
-        }
-
-        #messageInput {
             width: 60%;
         }
 
@@ -82,101 +96,79 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.2/firebase-database-compat.js"></script>
 
     <script>
-   // Initialize Firebase with your configuration
-var firebaseConfig = {
-    apiKey: "AIzaSyBW95P-YZ0GWJDdc_VYF8KC5VhDU5y9278",
-    authDomain: "gracewelldatabase.firebaseapp.com",
-    projectId: "gracewelldatabase",
-    databaseURL: "https://gracewelldatabase-default-rtdb.europe-west1.firebasedatabase.app",
-    storageBucket: "gracewelldatabase.appspot.com"
-};
-firebase.initializeApp(firebaseConfig);
+        // Initialize Firebase with your configuration
+        var firebaseConfig = {
+            apiKey: "AIzaSyBW95P-YZ0GWJDdc_VYF8KC5VhDU5y9278",
+            authDomain: "gracewelldatabase.firebaseapp.com",
+            projectId: "gracewelldatabase",
+            databaseURL: "https://gracewelldatabase-default-rtdb.europe-west1.firebasedatabase.app",
+            storageBucket: "gracewelldatabase.appspot.com"
+        };
+        firebase.initializeApp(firebaseConfig);
 
-var database = firebase.database();
-var chatRef = database.ref("chat");
+        var database = firebase.database();
+        var chatRef = database.ref("chat");
 
-// Reference the chat interface elements
-var chat = document.getElementById("chat");
-var messageInput = document.getElementById("messageInput");
-var sendButton = document.getElementById("sendButton");
-
-// Reference the username input element
-var usernameInput = document.getElementById("usernameInput");
-
-// Set a default username (or you can leave it empty)
-var username = "User";
-
-// Listen for a change in the username input
-usernameInput.addEventListener("input", function () {
-    username = usernameInput.value;
-});
-
-// Send a message
-sendButton.addEventListener("click", function () {
-    var messageText = messageInput.value;
-    if (messageText) {
-        chatRef.push({
-            user: username, // Use the username input value
-            text: messageText,
-            timestamp: firebase.database.ServerValue.TIMESTAMP // Use Firebase server timestamp
-        });
-        messageInput.value = "";
-    }
-});
-
-// Listen for new messages and display them
-// Listen for new messages and display them
-chatRef.on("child_added", function (snapshot) {
-    var message = snapshot.val();
-    var messageTime = new Date(message.timestamp);
-
-    var messageDiv = document.createElement("div");
-    messageDiv.className = "message";
-    if (message.user === username) {
-        messageDiv.classList.add("user");
-    }
-
-    var messageText = document.createElement("span");
-    messageText.textContent = message.user + ": " + message.text;
-
-    var timestampSpan = document.createElement("span");
-    timestampSpan.className = "timestamp";
-    timestampSpan.textContent = "(" + messageTime.toLocaleTimeString() + ")";
-
-    messageDiv.appendChild(messageText);
-    messageDiv.appendChild(timestampSpan);
-    chat.appendChild(messageDiv);
-
-    // Scroll to the bottom to show the latest message
-    chat.scrollTop = chat.scrollHeight;
-});
-
+        // Reference the chat interface elements
+        var chat = document.getElementById("chat");
+        var messageInput = document.getElementById("messageInput");
+        var sendButton = document.getElementById("sendButton");
 
         // Reference the username input element
         var usernameInput = document.getElementById("usernameInput");
 
-// Set a default username (or you can leave it empty)
-var username = "User";
+        // Set a default username (or you can leave it empty)
+        var username = "User";
 
-// Listen for a change in the username input
-usernameInput.addEventListener("input", function () {
-    username = usernameInput.value;
-});
-
-// Send a message
-sendButton.addEventListener("click", function () {
-    var messageText = messageInput.value;
-    if (messageText) {
-        chatRef.push({
-            user: username, // Use the username input value
-            text: messageText,
-            timestamp: new Date().getTime(),
+        // Listen for a change in the username input
+        usernameInput.addEventListener("input", function () {
+            username = usernameInput.value;
         });
-        messageInput.value = "";
-    }
-});
 
+        // Send a message
+        sendButton.addEventListener("click", function () {
+            var messageText = messageInput.value;
+            if (messageText) {
+                chatRef.push({
+                    user: username, // Use the username input value
+                    text: messageText,
+                    timestamp: firebase.database.ServerValue.TIMESTAMP // Use Firebase server timestamp
+                });
+                messageInput.value = "";
+            }
+        });
 
+        // Listen for new messages and display them
+        chatRef.on("child_added", function (snapshot) {
+            var message = snapshot.val();
+            var messageTime = new Date(message.timestamp);
+
+            var messageDiv = document.createElement("div");
+            messageDiv.className = "message";
+            if (message.user === username) {
+                messageDiv.classList.add("user");
+            }
+
+            var userText = document.createElement("div");
+            userText.className = "user-text";
+            userText.textContent = message.user + ":";
+
+            var messageText = document.createElement("div");
+            messageText.className = "message-text";
+            messageText.textContent = message.text;
+
+            var timestampSpan = document.createElement("span");
+            timestampSpan.className = "timestamp";
+            timestampSpan.textContent = messageTime.toLocaleTimeString();
+
+            messageText.appendChild(timestampSpan);
+            messageDiv.appendChild(userText);
+            messageDiv.appendChild(messageText);
+            chat.appendChild(messageDiv);
+
+            // Scroll to the bottom to show the latest message
+            chat.scrollTop = chat.scrollHeight;
+        });
     </script>
 </body>
 </html>

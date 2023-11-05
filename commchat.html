@@ -24,19 +24,19 @@
             margin: 0 auto;
             padding: 10px;
             border: 1px solid #ccc;
-            border-radius: 10px; /* Increased border radius */
+            border-radius: 10px;
             text-align: left;
             min-height: 300px;
-            overflow-y: scroll;
+            overflow-y: scroll; /* Added scroll property */
         }
 
         .message {
             background-color: #007bff;
             color: white;
             border-radius: 10px;
-            max-width: 30%; /* Smaller width */
+            max-width: 30%;
             clear: both;
-            padding: 8px; /* Smaller padding */
+            padding: 8px;
             margin: 5px;
             overflow-wrap: break-word;
             position: relative;
@@ -47,19 +47,19 @@
         }
 
         .message .message-text {
-            font-size: 11px; /* Smaller font size */
+            font-size: 11px;
         }
 
         .message .timestamp {
-            font-size: 10px; /* Smaller font size */
+            font-size: 10px;
             position: absolute;
-            bottom: 2px; /* Adjusted bottom position */
-            right: 2px; /* Adjusted right position */
+            bottom: 2px;
+            right: 2px;
         }
 
         .message .user-text {
             font-weight: bold;
-            font-size: 12px; /* Smaller font size */
+            font-size: 12px;
         }
 
         #messageInput {
@@ -87,8 +87,9 @@
 </head>
 <body>
     <h1>Chat Room</h1>
-    <input type="text" id="usernameInput" placeholder="Set your username">
+    
     <div id="chat"></div>
+    <input type="text" id="usernameInput" placeholder="Set your username">
     <input type="text" id="messageInput" placeholder="Type a message">
     <button id="sendButton">Send</button>
 
@@ -151,7 +152,7 @@
 
             var userText = document.createElement("div");
             userText.className = "user-text";
-            userText.textContent = message.user + ":";
+            userText.textContent = message.user;
 
             var messageText = document.createElement("div");
             messageText.className = "message-text";

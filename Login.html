@@ -61,6 +61,11 @@
         #signInButton:hover {
             background-color: #0056b3;
         }
+
+        #signInMessage {
+            margin: 10px auto;
+            color: green;
+        }
     </style>
 </head>
 <body>
@@ -70,6 +75,7 @@
         <input type="email" id="emailInput" placeholder="Email">
         <input type="password" id="passwordInput" placeholder="Password">
         <button id="signInButton">Sign In</button>
+        <div id="signInMessage"></div>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/9.6.2/firebase-app-compat.js"></script>
@@ -91,6 +97,7 @@
 
         // Sign in with email and password
         var signInButton = document.getElementById("signInButton");
+        var signInMessage = document.getElementById("signInMessage");
         signInButton.addEventListener("click", function () {
             var email = emailInput.value;
             var password = passwordInput.value;
@@ -99,11 +106,14 @@
                 // User signed in successfully
                 var user = userCredential.user;
 
+                // Display sign-in confirmation message
+                signInMessage.textContent = "Sign-in successful!";
+
                 // Redirect to the chat page or update the UI
-                window.location.href = "chat.html"; // Replace with the chat page URL
+                window.location.href = "commchat.html"; // Replace with the chat page URL
             }).catch(function (error) {
                 // Handle errors, e.g., invalid credentials
-                console.error(error.message);
+                signInMessage.textContent = "Sign-in failed. " + error.message;
             });
         });
     </script>

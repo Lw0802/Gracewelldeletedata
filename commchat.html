@@ -1,12 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <script src="https://www.gstatic.com/firebasejs/9.6.2/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.2/firebase-database-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.2/firebase-storage-compat.js"></script>
-
     <meta charset="utf-8">
-    <title>Simple Chat App</title>
+    <title>Chat Room</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -21,6 +17,10 @@
             color: white;
             padding: 10px 0;
         }
+        .message .image {
+        max-width: 20%;
+        max-height: 20px; /* Adjust the maximum height as per your preference */
+    }
 
         #chat-container {
             background-color: white;
@@ -30,7 +30,7 @@
             border: 1px solid #ccc;
             border-radius: 10px;
             text-align: left;
-            max-height: 300px; /* Set a fixed maximum height for the chat box */
+            max-height: 350px; /* Set a fixed maximum height for the chat box */
             overflow-y: scroll;
         }
 
@@ -53,11 +53,6 @@
             font-size: 14px;
         }
 
-        .message .message-image img {
-            max-width: 100%;
-            max-height: 150px; /* Set a maximum height for the displayed image */
-        }
-
         .message .timestamp {
             font-size: 12px;
             position: absolute;
@@ -68,6 +63,10 @@
         .message .user-text {
             font-weight: bold;
             font-size: 16px;
+        }
+
+        .message .image {
+            max-width: 20%;
         }
 
         .message.other {
@@ -86,21 +85,11 @@
             font-size: 14px;
         }
 
-        #imageInput {
-            display: block;
-            margin: 10px auto;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            width: 80%;
-            font-size: 14px;
+        #fileInput {
+            display: none;
         }
 
-        #imageFile {
-            display: none; /* Hide the file input visually */
-        }
-
-        #imageLabel {
+        #fileLabel {
             background-color: #007bff;
             color: white;
             border: none;
@@ -108,19 +97,10 @@
             padding: 10px 15px;
             cursor: pointer;
             font-size: 16px;
+            margin-top: 10px;
         }
 
-        #sendButton {
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            padding: 10px 15px;
-            cursor: pointer;
-            font-size: 16px;
-        }
-
-        #sendButton:hover {
+        #fileLabel:hover {
             background-color: #0056b3;
         }
     </style>
@@ -133,10 +113,14 @@
     </div>
     <input type="text" id="usernameInput" placeholder="Set your username">
     <input type="text" id="messageInput" placeholder="Type a message">
-    <input type="file" id="imageFile">
-    <label for="imageFile" id="imageLabel">Upload Image</label>
     <button id="sendButton">Send</button>
+    <input type="file" id="fileInput">
+    <label for="fileInput" id="fileLabel">Upload Image</label>
 
+    <script src="https://www.gstatic.com/firebasejs/9.6.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.2/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.2/firebase-storage-compat.js"></script>
 
     <script>
         // Initialize Firebase with your configuration
@@ -151,65 +135,84 @@
 
         var database = firebase.database();
         var chatRef = database.ref("chat");
+        var auth = firebase.auth();
+        var storage = firebase.storage(); // Initialize Firebase Storage
 
         // Reference the chat interface elements
         var chat = document.getElementById("chat");
         var messageInput = document.getElementById("messageInput");
-        var imageInput = document.getElementById("imageFile");
-        var imageLabel = document.getElementById("imageLabel");
         var sendButton = document.getElementById("sendButton");
+        var fileInput = document.getElementById("fileInput");
+        var fileLabel = document.getElementById("fileLabel");
 
         // Reference the username input element
         var usernameInput = document.getElementById("usernameInput");
 
-        // Set a default username (or you can leave it empty)
+        // Set a default username to be updated after user signs in
         var username = "User";
 
-        // Listen for a change in the username input
-        usernameInput.addEventListener("input", function () {
-            username = usernameInput.value;
-        });
-
-        // Handle image upload
-        imageInput.addEventListener("change", function (event) {
-            const file = event.target.files[0];
-            if (file) {
-                imageLabel.textContent = "Image Selected";
+        // Listen for changes in authentication state
+        auth.onAuthStateChanged(function (user) {
+            if (user) {
+                username = user.email;
+                usernameInput.value = username;
             }
         });
 
         // Send a message
         sendButton.addEventListener("click", function () {
             var messageText = messageInput.value;
-            var imageFile = imageInput.files[0];
-            if (messageText || imageFile) {
-                var messageData = {
-                    user: username, // Use the username input value
+            if (messageText) {
+                chatRef.push({
+                    user: username,
                     text: messageText,
-                    timestamp: firebase.database.ServerValue.TIMESTAMP, // Use Firebase server timestamp
-                };
-                if (imageFile) {
-                    const storageRef = firebase.storage().ref().child(imageFile.name);
-                    storageRef.put(imageFile)
-                        .then(function (snapshot) {
-                            return snapshot.ref.getDownloadURL();
-                        })
-                        .then(function (downloadURL) {
-                            messageData.image = downloadURL;
-                            sendMessage(messageData);
-                        });
-                } else {
-                    sendMessage(messageData);
-                }
+                    timestamp: firebase.database.ServerValue.TIMESTAMP
+                });
                 messageInput.value = "";
-                imageInput.value = "";
-                imageLabel.textContent = "Upload Image";
             }
         });
 
-        // Function to send a message
-        function sendMessage(messageData) {
-            chatRef.push(messageData);
+        // Upload and send an image
+        fileInput.addEventListener("change", function (e) {
+            var file = e.target.files[0];
+            if (file) {
+                var storageRef = storage.ref("images/" + Date.now() + "_" + file.name);
+                var uploadTask = storageRef.put(file);
+
+                uploadTask.on("state_changed", null, function (error) {
+                    console.error(error.message);
+                }, function () {
+                    // Image uploaded successfully, get the download URL
+                    uploadTask.snapshot.ref.getDownloadURL().then(function (downloadURL) {
+                        chatRef.push({
+                            user: username,
+                            image: downloadURL, // Store the image URL
+                            timestamp: firebase.database.ServerValue.TIMESTAMP
+                        });
+                    });
+                });
+            }
+        });
+
+        function addImageToChat(message) {
+            var img = document.createElement("img");
+            img.src = message.image;
+            img.alt = "Image";
+            img.style.maxWidth = "70%"; // Set the maximum width
+            img.style.maxHeight = "300px"; // Set the maximum height
+
+            var messageDiv = document.createElement("div");
+            messageDiv.className = "message";
+            if (message.user === username) {
+                messageDiv.classList.add("user");
+            } else {
+                messageDiv.classList.add("other");
+            }
+
+            messageDiv.appendChild(img);
+
+            chat.appendChild(messageDiv);
+            scrollToBottom();
         }
 
         // Function to scroll the chat box to the bottom
@@ -223,44 +226,38 @@
         // Listen for new messages and display them
         chatRef.on("child_added", function (snapshot) {
             var message = snapshot.val();
-            var messageTime = new Date(message.timestamp);
-
-            var messageDiv = document.createElement("div");
-            messageDiv.className = "message";
-            if (message.user === username) {
-                messageDiv.classList.add("user");
-            } else {
-                messageDiv.classList.add("other");
-            }
-
-            var userText = document.createElement("div");
-            userText.className = "user-text";
-            userText.textContent = message.user + ":";
-
-            var messageText = document.createElement("div");
-            messageText.className = "message-text";
-            messageText.textContent = message.text;
-
             if (message.image) {
-                var messageImage = document.createElement("div");
-                messageImage.className = "message-image";
-                var imageElement = document.createElement("img");
-                imageElement.src = message.image;
-                messageImage.appendChild(imageElement);
-                messageDiv.appendChild(messageImage);
+                // If the message contains an image, add it to the chat
+                addImageToChat(message);
+            } else {
+                var messageTime = new Date(message.timestamp);
+
+                var messageDiv = document.createElement("div");
+                messageDiv.className = "message";
+                if (message.user === username) {
+                    messageDiv.classList.add("user");
+                } else {
+                    messageDiv.classList.add("other");
+                }
+
+                var userText = document.createElement("div");
+                userText.className = "user-text";
+                userText.textContent = message.user;
+
+                var messageText = document.createElement("div");
+                messageText.className = "message-text";
+                messageText.textContent = message.text;
+
+                var timestampSpan = document.createElement("span");
+                timestampSpan.className = "timestamp";
+                timestampSpan.textContent = messageTime.toLocaleTimeString();
+
+                messageText.appendChild(timestampSpan);
+                messageDiv.appendChild(userText);
+                messageDiv.appendChild(messageText);
+                chat.appendChild(messageDiv);
+                scrollToBottom();
             }
-
-            var timestampSpan = document.createElement("span");
-            timestampSpan.className = "timestamp";
-            timestampSpan.textContent = messageTime.toLocaleTimeString();
-
-            messageText.appendChild(timestampSpan);
-            messageDiv.appendChild(userText);
-            messageDiv.appendChild(messageText);
-            chat.appendChild(messageDiv);
-
-            // Scroll to the bottom to show the latest message
-            scrollToBottom();
         });
     </script>
 </body>

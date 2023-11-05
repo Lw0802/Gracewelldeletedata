@@ -1,6 +1,10 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <script src="https://www.gstatic.com/firebasejs/9.6.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.2/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.2/firebase-storage-compat.js"></script>
+
     <meta charset="utf-8">
     <title>Simple Chat App</title>
     <style>
@@ -18,83 +22,121 @@
             padding: 10px 0;
         }
 
-        #chat {
-            background-color: #f0f0f0;
+        #chat-container {
+            background-color: white;
             width: 80%;
             margin: 0 auto;
             padding: 10px;
             border: 1px solid #ccc;
             border-radius: 10px;
             text-align: left;
-            min-height: 300px;
-            overflow-y: scroll; /* Added scroll property */
+            max-height: 300px; /* Set a fixed maximum height for the chat box */
+            overflow-y: scroll;
         }
 
         .message {
-            background-color: #007bff;
-            color: white;
-            border-radius: 10px;
-            max-width: 30%;
+            max-width: 70%;
             clear: both;
-            padding: 8px;
-            margin: 5px;
+            padding: 10px;
+            margin: 10px 0;
             overflow-wrap: break-word;
-            position: relative;
+            border-radius: 10px;
         }
 
         .message.user {
             background-color: #4CAF50;
+            color: white;
+            float: right;
         }
 
         .message .message-text {
-            font-size: 11px;
+            font-size: 14px;
+        }
+
+        .message .message-image img {
+            max-width: 100%;
+            max-height: 150px; /* Set a maximum height for the displayed image */
         }
 
         .message .timestamp {
-            font-size: 10px;
+            font-size: 12px;
             position: absolute;
-            bottom: 2px;
-            right: 2px;
+            bottom: 5px;
+            right: 10px;
         }
 
         .message .user-text {
             font-weight: bold;
-            font-size: 12px;
+            font-size: 16px;
+        }
+
+        .message.other {
+            background-color: #007bff;
+            color: white;
+            float: left;
         }
 
         #messageInput {
             display: block;
             margin: 10px auto;
-            padding: 5px;
+            padding: 10px;
             border: 1px solid #ccc;
             border-radius: 5px;
-            width: 60%;
+            width: 80%;
+            font-size: 14px;
         }
 
-        #sendButton {
-            background-color: #333;
+        #imageInput {
+            display: block;
+            margin: 10px auto;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: 80%;
+            font-size: 14px;
+        }
+
+        #imageFile {
+            display: none; /* Hide the file input visually */
+        }
+
+        #imageLabel {
+            background-color: #007bff;
             color: white;
             border: none;
             border-radius: 5px;
-            padding: 5px 10px;
+            padding: 10px 15px;
             cursor: pointer;
+            font-size: 16px;
+        }
+
+        #sendButton {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 15px;
+            cursor: pointer;
+            font-size: 16px;
         }
 
         #sendButton:hover {
-            background-color: #555;
+            background-color: #0056b3;
         }
     </style>
 </head>
 <body>
     <h1>Chat Room</h1>
-    
-    <div id="chat"></div>
+
+    <div id="chat-container">
+        <div id="chat"></div>
+    </div>
     <input type="text" id="usernameInput" placeholder="Set your username">
     <input type="text" id="messageInput" placeholder="Type a message">
+    <input type="file" id="imageFile">
+    <label for="imageFile" id="imageLabel">Upload Image</label>
     <button id="sendButton">Send</button>
 
-    <script src="https://www.gstatic.com/firebasejs/9.6.2/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.2/firebase-database-compat.js"></script>
 
     <script>
         // Initialize Firebase with your configuration
@@ -113,6 +155,8 @@
         // Reference the chat interface elements
         var chat = document.getElementById("chat");
         var messageInput = document.getElementById("messageInput");
+        var imageInput = document.getElementById("imageFile");
+        var imageLabel = document.getElementById("imageLabel");
         var sendButton = document.getElementById("sendButton");
 
         // Reference the username input element
@@ -126,18 +170,55 @@
             username = usernameInput.value;
         });
 
+        // Handle image upload
+        imageInput.addEventListener("change", function (event) {
+            const file = event.target.files[0];
+            if (file) {
+                imageLabel.textContent = "Image Selected";
+            }
+        });
+
         // Send a message
         sendButton.addEventListener("click", function () {
             var messageText = messageInput.value;
-            if (messageText) {
-                chatRef.push({
+            var imageFile = imageInput.files[0];
+            if (messageText || imageFile) {
+                var messageData = {
                     user: username, // Use the username input value
                     text: messageText,
-                    timestamp: firebase.database.ServerValue.TIMESTAMP // Use Firebase server timestamp
-                });
+                    timestamp: firebase.database.ServerValue.TIMESTAMP, // Use Firebase server timestamp
+                };
+                if (imageFile) {
+                    const storageRef = firebase.storage().ref().child(imageFile.name);
+                    storageRef.put(imageFile)
+                        .then(function (snapshot) {
+                            return snapshot.ref.getDownloadURL();
+                        })
+                        .then(function (downloadURL) {
+                            messageData.image = downloadURL;
+                            sendMessage(messageData);
+                        });
+                } else {
+                    sendMessage(messageData);
+                }
                 messageInput.value = "";
+                imageInput.value = "";
+                imageLabel.textContent = "Upload Image";
             }
         });
+
+        // Function to send a message
+        function sendMessage(messageData) {
+            chatRef.push(messageData);
+        }
+
+        // Function to scroll the chat box to the bottom
+        function scrollToBottom() {
+            chat.scrollTop = chat.scrollHeight;
+        }
+
+        // Call scrollToBottom when the page loads
+        window.addEventListener('load', scrollToBottom);
 
         // Listen for new messages and display them
         chatRef.on("child_added", function (snapshot) {
@@ -148,15 +229,26 @@
             messageDiv.className = "message";
             if (message.user === username) {
                 messageDiv.classList.add("user");
+            } else {
+                messageDiv.classList.add("other");
             }
 
             var userText = document.createElement("div");
             userText.className = "user-text";
-            userText.textContent = message.user;
+            userText.textContent = message.user + ":";
 
             var messageText = document.createElement("div");
             messageText.className = "message-text";
             messageText.textContent = message.text;
+
+            if (message.image) {
+                var messageImage = document.createElement("div");
+                messageImage.className = "message-image";
+                var imageElement = document.createElement("img");
+                imageElement.src = message.image;
+                messageImage.appendChild(imageElement);
+                messageDiv.appendChild(messageImage);
+            }
 
             var timestampSpan = document.createElement("span");
             timestampSpan.className = "timestamp";
@@ -168,7 +260,7 @@
             chat.appendChild(messageDiv);
 
             // Scroll to the bottom to show the latest message
-            chat.scrollTop = chat.scrollHeight;
+            scrollToBottom();
         });
     </script>
 </body>

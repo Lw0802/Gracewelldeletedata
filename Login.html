@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Login</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+        }
+
+        h1 {
+            background-color: #333;
+            color: white;
+            padding: 10px 0;
+        }
+
+        #login-container {
+            background-color: white;
+            width: 80%;
+            margin: 0 auto;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            text-align: left;
+        }
+
+        #emailInput {
+            display: block;
+            margin: 10px auto;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: 80%;
+            font-size: 14px;
+        }
+
+        #passwordInput {
+            display: block;
+            margin: 10px auto;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: 80%;
+            font-size: 14px;
+        }
+
+        #signInButton {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 15px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        #signInButton:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <h1>Login Page</h1>
+
+    <div id="login-container">
+        <input type="email" id="emailInput" placeholder="Email">
+        <input type="password" id="passwordInput" placeholder="Password">
+        <button id="signInButton">Sign In</button>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.6.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.2/firebase-auth-compat.js"></script>
+    <script>
+        // Initialize Firebase with your configuration
+        var firebaseConfig = {
+            apiKey: "AIzaSyBW95P-YZ0GWJDdc_VYF8KC5VhDU5y9278",
+            authDomain: "gracewelldatabase.firebaseapp.com",
+            projectId: "gracewelldatabase",
+        };
+        firebase.initializeApp(firebaseConfig);
+
+        var auth = firebase.auth();
+
+        // Reference the email and password input elements
+        var emailInput = document.getElementById("emailInput");
+        var passwordInput = document.getElementById("passwordInput");
+
+        // Sign in with email and password
+        var signInButton = document.getElementById("signInButton");
+        signInButton.addEventListener("click", function () {
+            var email = emailInput.value;
+            var password = passwordInput.value;
+
+            auth.signInWithEmailAndPassword(email, password).then(function (userCredential) {
+                // User signed in successfully
+                var user = userCredential.user;
+
+                // Redirect to the chat page or update the UI
+                window.location.href = "chat.html"; // Replace with the chat page URL
+            }).catch(function (error) {
+                // Handle errors, e.g., invalid credentials
+                console.error(error.message);
+            });
+        });
+    </script>
+</body>
+</html>

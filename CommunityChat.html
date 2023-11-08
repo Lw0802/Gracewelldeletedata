@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GraceWell Methodist Church</title>
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <script src="https://www.gstatic.com/firebasejs/8.6.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.6.1/firebase-database.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.6.1/firebase-storage.js"></script>
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="././css_files/contact_page.css">
+  <link rel="stylesheet" href="././css_files/global.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <style>
+            .input-container {
+            display: flex;
+            flex-direction: column;
+            /* Place children in a column layout */
+            align-items: flex-start;
+            /* Align children to the left */
+        }
+
+        .auto-width-input {
+            width: 100%;
+            /* Set the input to 100% width of its container */
+            height: 40px;
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin-bottom: 5px;
+        }
+
+        button {
+            background-color: #0059ff;
+            color: #fff;
+            border: none;
+            padding: 5px 5px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0059ff;
+        }
+
+        /* Style for the navigation bar */
+        .navbar {
+            background-color: #3498db;
+            overflow: hidden;
+        }
+
+        .navbar a {
+            float: left;
+            display: block;
+            color: #fff;
+            text-align: center;
+            padding: 14px 16px;
+            text-decoration: none;
+        }
+
+        .navbar a:hover {
+            background-color: #258cd1;
+        }
+
+        /* Style for images */
+        #photo-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            /* Create a responsive grid */
+            gap: 10px;
+            /* Add some spacing between images */
+            list-style: none;
+            /* Remove list bullet points */
+            padding: 0;
+            /* Remove default padding */
+        }
+
+        #photo-list img {
+            max-width: 100%;
+            /* Adjust the maximum width as needed */
+            height: auto;
+            /* Maintain aspect ratio */
+        }
+
+        .photo-container {
+            position: relative;
+        }
+
+        .photo-container button {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            background: #e74c3c;
+            color: #fff;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .photo-container button:hover {
+            background: #c0392b;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+        }
+
+        h1 {
+            background-color: #333;
+            color: white;
+            padding: 10px 0;
+        }
+        .message .image {
+        max-width: 20%;
+        max-height: 20px; /* Adjust the maximum height as per your preference */
+    }
+
+        #chat-container {
+            background-color: white;
+            width: 80%;
+            margin: 0 auto;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            text-align: left;
+            max-height: 350px; /* Set a fixed maximum height for the chat box */
+            overflow-y: scroll;
+        }
+
+        .message {
+            max-width: 70%;
+            clear: both;
+            padding: 10px;
+            margin: 10px 0;
+            overflow-wrap: break-word;
+            border-radius: 10px;
+        }
+
+        .message.user {
+            background-color: #4CAF50;
+            color: white;
+            float: right;
+        }
+
+        .message .message-text {
+            font-size: 14px;
+        }
+
+        .message .timestamp {
+            font-size: 12px;
+            position: absolute;
+            bottom: 5px;
+            right: 10px;
+        }
+
+        .message .user-text {
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .message .image {
+            max-width: 20%;
+        }
+
+        .message.other {
+            background-color: #007bff;
+            color: white;
+            float: left;
+        }
+
+        #messageInput {
+            display: block;
+            margin: 10px auto;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: 80%;
+            font-size: 14px;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        #fileLabel {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 15px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+
+        #fileLabel:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+
+<body>
+  <div id="app">
+    <!-- Navigation bar -->
+    <nav class="navbar navbar-expand-md navbar-dark bg-dark">
+      <a class="navbar-brand" href="././index.html" target="_self"></a>
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
+        aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ml-auto">
+          <li class="nav-item"><a class="nav-link" href="https://xbcis-group.github.io/GraceWell_Methodist_Church.github.io/home_page.html" target="_self">Home</a></li>
+          <li class="nav-item"><a class="nav-link" href="././about_page.html" target="_self">About</a></li>
+          <li class="nav-item"><a class="nav-link" href="././contact_page.html" target="_self">Contact</a></li>
+          <li class="nav-item"><a class="nav-link" href="././donations_page.html" target="_self">Donations</a></li>
+          <li class="nav-item"><a class="nav-link" href="././appointments_page.html" target="_self">Appointments</a>
+          </li>
+          <li class="nav-item"><a class="nav-link" href="././get_involved_page.html" target="_self">Get Involved</a>
+          </li>
+          <li class="nav-item"><a class="nav-link" href="#">Sign In</a></li>
+        </ul>
+      </div>
+    </nav>
+
+    <!-- Header Image with Welcome Message -->
+    <div class="header-image">
+      <div class="center-panel">
+        <h1>Ephesians 2:19-21</h1>
+        <p>"So then you are no longer strangers and aliens, but you are fellow citizens with the saints and members of
+          the household of God, built on the foundation of the apostles and prophets, Christ Jesus himself being the
+          cornerstone, in whom the whole structure, being joined together, grows into a holy temple in the Lord.</p>
+      </div>
+    </div>
+
+    <!-- Page content -->
+    <section class="content-section">
+        <h1>Chat Room</h1>
+
+        <div id="chat-container">
+            <div id="chat"></div>
+        </div>
+        <input type="text" id="usernameInput" placeholder="Set your username">
+        <input type="text" id="messageInput" placeholder="Type a message">
+        <button id="sendButton">Send</button>
+        <input type="file" id="fileInput">
+        <label for="fileInput" id="fileLabel">Upload Image</label>
+    
+        <script src="https://www.gstatic.com/firebasejs/9.6.2/firebase-app-compat.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/9.6.2/firebase-database-compat.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/9.6.2/firebase-auth-compat.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/9.6.2/firebase-storage-compat.js"></script>
+    
+        <script>
+            // Initialize Firebase with your configuration
+            var firebaseConfig = {
+                apiKey: "AIzaSyBW95P-YZ0GWJDdc_VYF8KC5VhDU5y9278",
+                authDomain: "gracewelldatabase.firebaseapp.com",
+                projectId: "gracewelldatabase",
+                databaseURL: "https://gracewelldatabase-default-rtdb.europe-west1.firebasedatabase.app",
+                storageBucket: "gracewelldatabase.appspot.com"
+            };
+            firebase.initializeApp(firebaseConfig);
+    
+            var database = firebase.database();
+            var chatRef = database.ref("chat");
+            var auth = firebase.auth();
+            var storage = firebase.storage(); // Initialize Firebase Storage
+    
+            // Reference the chat interface elements
+            var chat = document.getElementById("chat");
+            var messageInput = document.getElementById("messageInput");
+            var sendButton = document.getElementById("sendButton");
+            var fileInput = document.getElementById("fileInput");
+            var fileLabel = document.getElementById("fileLabel");
+    
+            // Reference the username input element
+            var usernameInput = document.getElementById("usernameInput");
+    
+            // Set a default username to be updated after user signs in
+            var username = "User";
+    
+            // Listen for changes in authentication state
+            auth.onAuthStateChanged(function (user) {
+                if (user) {
+                    username = user.email;
+                    usernameInput.value = username;
+                }
+            });
+    
+            // Send a message
+            sendButton.addEventListener("click", function () {
+                var messageText = messageInput.value;
+                if (messageText) {
+                    chatRef.push({
+                        user: username,
+                        text: messageText,
+                        timestamp: firebase.database.ServerValue.TIMESTAMP
+                    });
+                    messageInput.value = "";
+                }
+            });
+    
+            // Upload and send an image
+            fileInput.addEventListener("change", function (e) {
+                var file = e.target.files[0];
+                if (file) {
+                    var storageRef = storage.ref("images/" + Date.now() + "_" + file.name);
+                    var uploadTask = storageRef.put(file);
+    
+                    uploadTask.on("state_changed", null, function (error) {
+                        console.error(error.message);
+                    }, function () {
+                        // Image uploaded successfully, get the download URL
+                        uploadTask.snapshot.ref.getDownloadURL().then(function (downloadURL) {
+                            chatRef.push({
+                                user: username,
+                                image: downloadURL, // Store the image URL
+                                timestamp: firebase.database.ServerValue.TIMESTAMP
+                            });
+                        });
+                    });
+                }
+            });
+    
+            function addImageToChat(message) {
+                var img = document.createElement("img");
+                img.src = message.image;
+                img.alt = "Image";
+                img.style.maxWidth = "70%"; // Set the maximum width
+                img.style.maxHeight = "300px"; // Set the maximum height
+    
+                var messageDiv = document.createElement("div");
+                messageDiv.className = "message";
+                if (message.user === username) {
+                    messageDiv.classList.add("user");
+                } else {
+                    messageDiv.classList.add("other");
+                }
+    
+                messageDiv.appendChild(img);
+    
+                chat.appendChild(messageDiv);
+                scrollToBottom();
+            }
+    
+            // Function to scroll the chat box to the bottom
+            function scrollToBottom() {
+                chat.scrollTop = chat.scrollHeight;
+            }
+    
+            // Call scrollToBottom when the page loads
+            window.addEventListener('load', scrollToBottom);
+    
+            // Listen for new messages and display them
+            chatRef.on("child_added", function (snapshot) {
+                var message = snapshot.val();
+                if (message.image) {
+                    // If the message contains an image, add it to the chat
+                    addImageToChat(message);
+                } else {
+                    var messageTime = new Date(message.timestamp);
+    
+                    var messageDiv = document.createElement("div");
+                    messageDiv.className = "message";
+                    if (message.user === username) {
+                        messageDiv.classList.add("user");
+                    } else {
+                        messageDiv.classList.add("other");
+                    }
+    
+                    var userText = document.createElement("div");
+                    userText.className = "user-text";
+                    userText.textContent = message.user;
+    
+                    var messageText = document.createElement("div");
+                    messageText.className = "message-text";
+                    messageText.textContent = message.text;
+    
+                    var timestampSpan = document.createElement("span");
+                    timestampSpan.className = "timestamp";
+                    timestampSpan.textContent = messageTime.toLocaleTimeString();
+    
+                    messageText.appendChild(timestampSpan);
+                    messageDiv.appendChild(userText);
+                    messageDiv.appendChild(messageText);
+                    chat.appendChild(messageDiv);
+                    scrollToBottom();
+                }
+            });
+        </script>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="footer-content">
+        <p class="footer-label">© GraceWell Methodist Church. All rights reserved.</p>
+        <div class="footer-links">
+          <p class="footer-label">Follow Us:</p>
+          <!-- Facebook icon: https://www.flaticon.com/free-icons/facebook -->
+          <a href="https://www.facebook.com/GraceWellMC/"><img src="././website_images/facebook-logo(edited).png"
+              alt="facebook" class="footer-image"></a>
+          <!-- Instagram icon: https://www.flaticon.com/free-icons/instagram-sketched -->
+          <a href="https://www.instagram.com/gracewellmc/"><img src="././website_images/instagram-logo(edited).png"
+              alt="instagram" class="footer-image"></a>
+          <!-- LinkedIn icon: https://www.flaticon.com/free-icons/linkedin -->
+          <a href="https://za.linkedin.com/in/gracewell-methodist-church-807389219"><img
+              src="././website_images/linkedin-square-logo(edited).png" alt="linkedin" class="footer-image"></a>
+          <p class="footer-label" style="margin-left: 30px;">Download Our App:</p>
+          <!--App Store Icon: https://www.flaticon.com/free-icons/app-->
+          <a href="#"><img src="././website_images/app-store-logo(edited).png" alt="appstore" class="footer-image"></a>
+          <!--Play Store: https://www.flaticon.com/free-icons/playstore-->
+          <a href="#"><img src="././website_images/google-playstore-logo(edited).png" alt="playstore"
+              class="footer-image"></a>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Bootstrap JS (Popper.js and jQuery are required for Bootstrap) -->
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.1/dist/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+  <!-- Vue.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+
+  <!-- Custom JavaScript code -->
+  <script src="././js_files/global.js"></script>
+
+</body>
+
+</html>
